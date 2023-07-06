@@ -45,9 +45,11 @@ jobs:
       run: go build .
 
     - name: Run testing
-      run: cd test && go test -v -bench=.
+      run: go test -v -bench=.
 
   publish:
+    needs: [build]
+
     runs-on: ubuntu-latest
     permissions:
       contents: read
