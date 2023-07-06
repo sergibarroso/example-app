@@ -32,15 +32,14 @@ jobs:
       with:
         go-version: '1.20'
 
-    - name: Install dependencies
-      run: |
-        go version
-        go get -u golang.org/x/lint/golint
-
-    - name: Vet and Lint
-      run: |
-        go vet .
-        golint .
+    - name: Lint Code Base
+      uses: super-linter/super-linter:v5
+      env:
+        VALIDATE_ALL_CODEBASE: false
+        VALIDATE_DOCKERFILE_HADOLINT: true
+        VALIDATE_GITHUB_ACTIONS: true
+        VALIDATE_GO: true
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build
       run: go build .
