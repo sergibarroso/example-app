@@ -1,0 +1,43 @@
+name: example-app-helm-chart
+
+on:
+  push:
+    branches:
+      - main
+      - stg
+      - dev
+    tags: [ 'v*.*.*' ]
+  pull_request:
+    branches:
+      - main
+      - stg
+      - dev
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+  # deploy:
+  #   runs-on: ubuntu-latest
+
+  #   # Only run this workflow when "build" workflow succeeds
+  #   needs: [build]
+
+  #   # Only run this workflow if it is main branch on push event
+  #   if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+  #   steps:
+  #   - name: Checkout
+  #     uses: actions/checkout@v3
+
+  #   - id: 'auth'
+  #     name: 'Authenticate to Google Cloud'
+  #     uses: 'google-github-actions/auth@v1'
+  #     with:
+  #       workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
+  #       service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
+  #   # ... further steps are automatically authenticated
