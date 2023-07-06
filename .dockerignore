@@ -1,0 +1,11 @@
+# Git
+.gitignore
+.github
+.git
+
+# Markdown
+*.md
+
+# Docker
+Dockerfile
+.dockerignore
