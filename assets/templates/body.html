@@ -1,0 +1,30 @@
+{{define "body"}}
+<h1 class="hidden">Example App Body</h1>
+<header class="header">
+    <h1 class="hidden">Header</h1>
+    <img class="logo" src="/public/images/logo.svg">
+    <nav class="navigation">
+        <h2 class="hidden">Navigation</h2>
+        <ul class="navigation__items">
+            <li class="navigation__item">Home</li>
+            <li class="navigation__item">About</li>
+            <li class="navigation__item">Contact</li>
+        </ul>
+    </nav>
+</header>
+<main>
+    <h1 class="hidden">Main Content</h1>
+    <article class="main">
+        <h2 class="hidden">Main Article</h2>
+        <section class="main__text">
+            <h3 class="hidden">Main section</h3>
+            <p class="slogan slogan__bg">
+                <span class="slogan__greeting">{{.Company}}</span>
+                <span class="slogan__message">{{.Slogan}}</span>
+            </p>
+            <div class="js-container"></div>
+        </section>
+    </article>
+</main>
+<script type="text/javascript" src="/public/scripts/main.js"></script>
+{{end}}
