@@ -1,4 +1,4 @@
-name: example-app-docker-image
+name: docker-image
 
 on:
   push:

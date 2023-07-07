@@ -1,4 +1,4 @@
-name: example-app-helm-chart
+name: helm-chart
 
 on:
   push:
@@ -22,6 +22,16 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
+
+  helm-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: helm-check
+      uses: igabaydulin/helm-check-action@0.1.4
+      env:
+        CHART_LOCATION: ./helm-check-action-sample
+        CHART_VALUES: ./helm-check-action-sample/values/test.yaml
   # deploy:
   #   runs-on: ubuntu-latest
 
