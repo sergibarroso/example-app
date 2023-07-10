@@ -130,7 +130,7 @@ jobs:
         run: helm lint --strict --values charts/values.yaml charts
 
       - name: Helm template
-        run: helm template --dry-run --values charts/values.yaml ${{ env.IMAGE_NAME }} charts
+        run: helm template --dry-run --values charts/values.yaml ${{ github.event.repository.name }} charts
 
       - name: Log into registry ${{ env.REGISTRY }}
         if: ${{ github.event_name != 'pull_request' }}
