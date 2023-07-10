@@ -177,7 +177,7 @@ jobs:
 
       - name: Helm install
         if: ${{ github.event_name != 'pull_request' }}
-        run: helm upgrade --cleanup-on-fail --install -f charts/values.yaml ${{ github.event.repository.name }} charts
+        run: helm upgrade --cleanup-on-fail --install --namespace ${{ github.event.repository.name }} -f charts/values.yaml ${{ github.event.repository.name }} charts
 
         # TODO: install from GitHub container repository
         # - name: Helm deploy
