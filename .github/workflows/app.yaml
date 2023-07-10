@@ -173,7 +173,7 @@ jobs:
           version: '3.12.1'
 
       - name: Helm install dry-run
-        run: helm upgrade --dry-run  --cleanup-on-fail --install -f charts/values.yaml ${{ github.event.repository.name }} charts
+        run: helm upgrade --dry-run --cleanup-on-fail --install --namespace ${{ github.event.repository.name }} -f charts/values.yaml ${{ github.event.repository.name }} charts
 
       - name: Helm install
         if: ${{ github.event_name != 'pull_request' }}
