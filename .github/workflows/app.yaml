@@ -133,13 +133,16 @@ jobs:
       - name: Helm template
         run: helm template --dry-run --values charts/values.yaml ${{ github.event.repository.name }} charts
 
+      - name: Helm package
+        run: helm package charts
+
       - name: Log into registry ${{ env.REGISTRY }}
         if: ${{ github.event_name != 'pull_request' }}
         run: echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }} --username ${{ github.repository_owner }} --password-stdin
 
       - name: Publish chart
         if: ${{ github.event_name != 'pull_request' }}
-        run: helm chart push ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        run: helm push ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
   helm-deploy:
     runs-on: ubuntu-latest
