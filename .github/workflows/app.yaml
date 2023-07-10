@@ -134,7 +134,8 @@ jobs:
         run: helm template --dry-run --values charts/values.yaml ${{ github.event.repository.name }} charts
 
       - name: Helm package
-        run: helm package charts
+        id: helm-package
+        run: helm package charts | awk -F"/" '{print "FILE="$NF}' >> "$GITHUB_OUTPUT"
 
       - name: Log into registry ${{ env.REGISTRY }}
         if: ${{ github.event_name != 'pull_request' }}
@@ -142,7 +143,8 @@ jobs:
 
       - name: Publish chart
         if: ${{ github.event_name != 'pull_request' }}
-        run: helm push ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        run: helm push ${{ steps.helm-package.outputs.FILE }} ${{ env.REGISTRY }}
+        # run: helm push ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }} ${{ steps.helm-package.outputs.FILE }}
 
   helm-deploy:
     runs-on: ubuntu-latest
