@@ -1,5 +1,5 @@
-# Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,macos,go
-# Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,macos,go
+# Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,macos,go,helm
+# Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,macos,go,helm
 
 ### Go ###
 # If you prefer the allow list template instead of the deny list, see community template:
@@ -23,6 +23,10 @@
 
 # Go workspace file
 go.work
+
+### Helm ###
+# Chart dependencies
+**/charts/*.tgz
 
 ### macOS ###
 # General
@@ -75,4 +79,4 @@ Temporary Items
 .history
 .ionide
 
-# End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,macos,go
+# End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,macos,go,helm

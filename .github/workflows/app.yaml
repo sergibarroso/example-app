@@ -1,0 +1,184 @@
+name: docker-image
+
+on:
+  push:
+    branches:
+      - main
+      - stg
+      - dev
+    tags: ['v*.*.*']
+  pull_request:
+    branches:
+      - main
+      - stg
+      - dev
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Lint Code Base
+        uses: super-linter/super-linter/slim@v5
+        env:
+          DEFAULT_BRANCH: ${{ env.GITHUB_REF_NAME }}
+          VALIDATE_ALL_CODEBASE: false
+          VALIDATE_GITHUB_ACTIONS: true
+          VALIDATE_MARKDOWN: true
+          VALIDATE_DOCKERFILE_HADOLINT: true
+          VALIDATE_GO: true
+          VALIDATE_YAML: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [lint]
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+
+      - name: Build
+        run: go build .
+
+      - name: Run testing
+        run: go test -v -bench=.
+
+  docker-publish:
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install cosign
+        if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: 'v2.1.1'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log into registry ${{ env.REGISTRY }}
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Sign the published Docker image
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          COSIGN_EXPERIMENTAL: 'true'
+        run: echo "${{ steps.meta.outputs.tags }}" | xargs -I {} cosign sign {}@${{ steps.build-and-push.outputs.digest }}
+
+  helm-publish:
+    runs-on: ubuntu-latest
+    needs: [docker-publish]
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: '3.12.1'
+
+      - name: Helm lint
+        run: helm lint --strict --values charts/values.yaml charts
+
+      - name: Helm template
+        run: helm template --dry-run --values charts/values.yaml ${{ github.event.repository.name }} charts
+
+      # TODO: publish to GitHub container repository
+      # - name: Helm package
+      #   id: helm-package
+      #   run: helm package charts | awk -F"/" '{print "FILE="$NF}' >> "$GITHUB_OUTPUT"
+
+      # - name: Log into registry ${{ env.REGISTRY }}
+      #   run: echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }} --username ${{ github.repository_owner }} --password-stdin
+
+      # - name: Publish chart
+      #   run: helm push ${{ steps.helm-package.outputs.FILE }} oci://${{ env.REGISTRY }}/${{ github.repository_owner }}
+
+  helm-deploy:
+    runs-on: ubuntu-latest
+    needs: [helm-publish]
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: '${{ secrets.GCP_ACCESS_TOKEN }}'
+
+      - name: Get cluster credentials
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: gke-on-vpc-cluster
+          location: europe-west6
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: '3.12.1'
+
+      - name: Helm install dry-run
+        run: helm upgrade --dry-run --cleanup-on-fail --install --namespace ${{ github.event.repository.name }} -f charts/values.yaml ${{ github.event.repository.name }} charts
+
+      - name: Helm install
+        if: ${{ github.event_name != 'pull_request' }}
+        run: helm upgrade --cleanup-on-fail --install --namespace ${{ github.event.repository.name }} -f charts/values.yaml ${{ github.event.repository.name }} charts
+
+        # TODO: install from GitHub container repository
+        # - name: Helm deploy
+        #   run: helm upgrade --cleanup-on-fail --install --version ${{ github.sha }} --namespace ${{ github.event.repository.name }} ${{ github.event.repository.name }} ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
