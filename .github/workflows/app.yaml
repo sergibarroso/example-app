@@ -141,7 +141,8 @@ jobs:
         run: echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }} --username ${{ github.repository_owner }} --password-stdin
 
       - name: Publish chart
-        run: helm push ${{ steps.helm-package.outputs.FILE }} oci://${{ env.REGISTRY }}
+        run: helm push ${{ steps.helm-package.outputs.FILE }} oci://${{ env.REGISTRY }}/${{ github.repository_owner }}
+
         # run: helm push ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }} ${{ steps.helm-package.outputs.FILE }}
 
   helm-deploy:
