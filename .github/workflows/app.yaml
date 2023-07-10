@@ -133,14 +133,7 @@ jobs:
       - name: Helm template
         run: helm template --dry-run --values charts/values.yaml ${{ github.event.repository.name }} charts
 
-      - name: Helm install dry-run
-        run: helm upgrade --dry-run  --cleanup-on-fail --install -f charts/values.yaml ${{ github.event.repository.name }} charts
-
-      - name: Helm install
-        if: ${{ github.event_name != 'pull_request' }}
-        run: helm upgrade --cleanup-on-fail --install -f charts/values.yaml ${{ github.event.repository.name }} charts
-
-      # TODO: install from GitHub container repository
+      # TODO: publish to GitHub container repository
       # - name: Helm package
       #   id: helm-package
       #   run: helm package charts | awk -F"/" '{print "FILE="$NF}' >> "$GITHUB_OUTPUT"
@@ -151,34 +144,42 @@ jobs:
       # - name: Publish chart
       #   run: helm push ${{ steps.helm-package.outputs.FILE }} oci://${{ env.REGISTRY }}/${{ github.repository_owner }}
 
-  # helm-deploy:
-  #   runs-on: ubuntu-latest
-  #   needs: [helm-publish]
-  #   if: ${{ github.event_name != 'pull_request' }}
-  #   permissions:
-  #     contents: read
-  #     id-token: write
+  helm-deploy:
+    runs-on: ubuntu-latest
+    needs: [helm-publish]
+    if: ${{ github.event_name != 'pull_request' }}
+    permissions:
+      contents: read
+      id-token: write
 
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v3
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-  #     - name: Authenticate to Google Cloud
-  #       id: auth
-  #       uses: google-github-actions/auth@v1
-  #       with:
-  #         credentials_json: '${{ secrets.GCP_ACCESS_TOKEN }}'
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: '${{ secrets.GCP_ACCESS_TOKEN }}'
 
-  #     - name: Get cluster credentials
-  #       uses: google-github-actions/get-gke-credentials@v1
-  #       with:
-  #         cluster_name: gke-on-vpc-cluster
-  #         location: europe-west6
+      - name: Get cluster credentials
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: gke-on-vpc-cluster
+          location: europe-west6
 
-  #     - name: Setup Helm
-  #       uses: azure/setup-helm@v3
-  #       with:
-  #         version: '3.12.1'
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: '3.12.1'
 
-  #     - name: Helm deploy
-  #       run: helm upgrade --cleanup-on-fail --install --version ${{ github.sha }} --namespace ${{ github.event.repository.name }} ${{ github.event.repository.name }} ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+      - name: Helm install dry-run
+        run: helm upgrade --dry-run  --cleanup-on-fail --install -f charts/values.yaml ${{ github.event.repository.name }} charts
+
+      - name: Helm install
+        if: ${{ github.event_name != 'pull_request' }}
+        run: helm upgrade --cleanup-on-fail --install -f charts/values.yaml ${{ github.event.repository.name }} charts
+
+        # TODO: install from GitHub container repository
+        # - name: Helm deploy
+        #   run: helm upgrade --cleanup-on-fail --install --version ${{ github.sha }} --namespace ${{ github.event.repository.name }} ${{ github.event.repository.name }} ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
