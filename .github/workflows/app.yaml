@@ -137,9 +137,6 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         run: echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }} --username ${{ github.repository_owner }} --password-stdin
 
-      - name: Save chart
-        run: helm chart save ${{ github.workspace }}/src/azure-vote-helm-chart/ ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-
       - name: Publish chart
         if: ${{ github.event_name != 'pull_request' }}
         run: helm chart push ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
