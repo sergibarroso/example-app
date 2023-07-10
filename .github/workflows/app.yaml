@@ -140,3 +140,34 @@ jobs:
       - name: Publish chart
         if: ${{ github.event_name != 'pull_request' }}
         run: helm chart push ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+  helm-deploy:
+    runs-on: ubuntu-latest
+    needs: [helm-publish]
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: '${{ secrets.GCP_ACCESS_TOKEN }}'
+
+      - name: Get cluster credentials
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: gke-on-vpc-cluster
+          location: europe-west6
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: '3.12.1'
+
+      - name: Helm deploy
+        run: helm upgrade --cleanup-on-fail --install --version ${{ github.sha }} ${{ github.event.repository.name }} ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
