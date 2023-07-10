@@ -121,15 +121,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - uses: azure/setup-helm@v3
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
         with:
           version: '3.12.1'
 
-      - name: helm-check
-        uses: igabaydulin/helm-check-action@0.1.4
-        env:
-          CHART_LOCATION: ./helm-check-action-sample
-          CHART_VALUES: ./helm-check-action-sample/values/test.yaml
+      - name: Helm lint
+        run: helm lint --strict --values charts/values.yaml charts
+
+      - name: Helm template
+        run: helm template --dry-run --values charts/values.yaml ${{ env.IMAGE_NAME }} charts
 
       - name: Log into registry ${{ env.REGISTRY }}
         if: ${{ github.event_name != 'pull_request' }}
