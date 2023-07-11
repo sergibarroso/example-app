@@ -1,4 +1,4 @@
-name: docker-image
+name: app
 
 on:
   push:
@@ -73,7 +73,6 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install cosign
-        if: github.event_name != 'pull_request'
         uses: sigstore/cosign-installer@v3
         with:
           cosign-release: 'v2.1.1'
@@ -82,7 +81,6 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Log into registry ${{ env.REGISTRY }}
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
         with:
           registry: ${{ env.REGISTRY }}
@@ -100,14 +98,14 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          push: github.ref == 'refs/heads/main' && github.event_name == 'push'
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Sign the published Docker image
-        if: ${{ github.event_name != 'pull_request' }}
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
           COSIGN_EXPERIMENTAL: 'true'
         run: echo "${{ steps.meta.outputs.tags }}" | xargs -I {} cosign sign {}@${{ steps.build-and-push.outputs.digest }}
@@ -176,7 +174,7 @@ jobs:
         run: helm upgrade --dry-run --cleanup-on-fail --install --namespace ${{ github.event.repository.name }} -f charts/values.yaml ${{ github.event.repository.name }} charts
 
       - name: Helm install
-        if: ${{ github.event_name != 'pull_request' }}
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: helm upgrade --cleanup-on-fail --install --namespace ${{ github.event.repository.name }} -f charts/values.yaml ${{ github.event.repository.name }} charts
 
         # TODO: install from GitHub container repository
