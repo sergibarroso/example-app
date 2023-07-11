@@ -1,12 +1,13 @@
 name: app
 
 on:
+  release:
+    types: [published]
   push:
     branches:
       - main
       - stg
       - dev
-    tags: ['v*.*.*']
   pull_request:
     branches:
       - main
