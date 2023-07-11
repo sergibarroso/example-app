@@ -192,7 +192,7 @@ jobs:
         run: helm upgrade --dry-run --cleanup-on-fail --install --namespace ${{ github.event.repository.name }} -f charts/values.yaml ${{ github.event.repository.name }} charts
 
       - name: Helm install
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: startsWith(github.ref, 'refs/tags')
         run: helm upgrade --cleanup-on-fail --install --namespace ${{ github.event.repository.name }} -f charts/values.yaml ${{ github.event.repository.name }} charts
 
         # TODO: install from GitHub container repository
