@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: docker.io/sergibarroso/example-app
+  repository: ghcr.io/sergibarroso/example-app
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ''
