@@ -20,7 +20,7 @@ RUN echo "celonis:x:1000:celonis" >group
 FROM scratch as live
 
 LABEL group="cloud.celonis"
-LABEL version="1.0.0"
+LABEL version="1.1.1"
 
 COPY --from=user /passwd /etc/passwd
 COPY --from=user /group /etc/group
