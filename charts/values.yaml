@@ -48,6 +48,7 @@ ingress:
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: example-issuer
+    nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
   hosts:
     - host: example-app.challenge.sergibarroso.me
       paths:
